@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <title>World Map</title>
+  <meta charset="utf-8">
+  <style type="text/css">
+
+  rect:hover {
+  fill: orange;
+  }
+
+  #tooltip {
+  position: absolute;
+  width: 250px;
+  height: auto;
+  padding: 10px;
+  background-color: white;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  }
+
+  #tooltip.hidden {
+  display: none;
+  }
+
+  #tooltip p {
+  margin: 0;
+  font-family: Futura;
+  font-size: 16px;
+  line-height: 20px;
+  }
+
+  </style>
+
+
+</head>
+<body>
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/colorbrewer.v1.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+    <script src="../vendor/d3/d3.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    <h1>Inequality of wealth in the world</h1>
+    <svg id="my_dataviz" width="1240" height="880"></svg>
+
+    <div id="tooltip" class="hidden">
+      <p><strong>Country: <span id="name"></span></strong></p>
+      <p>Gini Index: <span id="gini"></span></p>
+
+    </div>
+
+    <script>
+//1200 900
+    // The svg
+    var svg = d3.select("svg"),
+      width = +svg.attr("width"),
+      height = +svg.attr("height");
+
+    // Map and projection
+    var path = d3.geoPath();
+    var projection = d3.geoMercator()
+      .scale(210)
+      .center([0,20])
+      .translate([width / 2, height / 2]);
+
+    // Data and color scale
+    var data = d3.map();
+    var names = d3.map();
+
+    var colorScale = d3.scaleQuantize()
+      .domain([ 22, 65 ])
+      .range(["#3ff393","#95fb51","#ecd12e","#ff821d","#cb2f0d","#900c00"]);
+
+    var colorLegend = d3.legendColor()
+      .labelFormat(d3.format(".0f"))
+      .scale(colorScale)
+      .shapePadding(5)
+      .shapeWidth(50)
+      .shapeHeight(20)
+      .labelOffset(12)
+      .title("Gini Index");
+
+    svg.append("g")
+      .attr("transform", "translate(0, 600)")
+      .call(colorLegend);
+
+
+    // Load external data and boot
+    d3.queue()
+      .defer(d3.json, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
+      .defer(d3.csv, "../data/world_map_data/data_map.csv", function(d) { data.set(d.code, +d.gini*100); })
+      .defer(d3.csv, "../data/world_map_data/data_map.csv", function(d) { names.set(d.code, d.name); })
+      .await(ready);
+
+    function ready(error, topo) {
+
+      let mouseOver = function(d) {
+          d3.select("#tooltip")
+                .select("#name")
+                .text(names.get(d.id))
+          d3.select("#tooltip")
+              .select("#gini")
+              .text(data.get(d.id));
+          d3.select("#tooltip").classed("hidden", false);
+
+        d3.selectAll(".Country")
+          .transition()
+          .duration(200)
+          .style("opacity", .5)
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .style("opacity", .9)
+          .style("stroke", "black")
+      }
+
+      let mouseLeave = function(d) {
+        d3.select("#tooltip").classed("hidden", true);
+        d3.selectAll(".Country")
+          .transition()
+          .duration(200)
+          .style("opacity", .9)
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .style("stroke", "black")
+      }
+
+
+
+      // Draw the map
+      svg.append("g")
+        .selectAll("path")
+        .data(topo.features)
+        .enter()
+        .append("path")
+          // draw each country
+          .attr("d", d3.geoPath()
+            .projection(projection)
+          )
+          // set the color of each country
+          .attr("fill", function (d) {
+              d.total = data.get(d.id);
+              if (d.total) {
+                  col = colorScale(d.total);
+              } else {
+                  col = d3.color("black");
+              }
+
+            return col;
+          })
+          .style("stroke", "black")
+          .attr("class", function(d){ return "Country" } )
+          .style("opacity", .8)
+          .on("mouseover", mouseOver )
+          .on("mouseleave", mouseLeave )
+        }
+
+    </script>
+    </body>
+  </html>
