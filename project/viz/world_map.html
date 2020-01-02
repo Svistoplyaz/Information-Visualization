@@ -97,8 +97,8 @@
     // Load external data and boot
     d3.queue()
       .defer(d3.json, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
-      .defer(d3.csv, "../data/world_map_data/data_map.csv", function(d) { data.set(d.code, +d.gini*100); })
-      .defer(d3.csv, "../data/world_map_data/data_map.csv", function(d) { names.set(d.code, d.name); })
+      .defer(d3.csv, "../data/world_map_data/agg_dates_data.csv", function(d) { if (d.year == "2012") {data.set(d.code, +d.gini*100)}; })
+      .defer(d3.csv, "../data/world_map_data/agg_dates_data.csv", function(d) { names.set(d.code, d.name); })
       .await(ready);
 
     function ready(error, topo) {
@@ -142,6 +142,7 @@
         .selectAll("path")
         .data(topo.features)
         .enter()
+
         .append("path")
           // draw each country
           .attr("d", d3.geoPath()
