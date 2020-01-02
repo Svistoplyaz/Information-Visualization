@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+#Aggregate all csv by year
+#Needs to run to_dates_csv.py before
+
 import pandas as pd
 
 data = pd.DataFrame()
