@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import csv
 import sys
 
@@ -21,8 +22,10 @@ else:
                     lines.append(line)
 
 
-    with open("data_map.csv", 'w', newline='') as data_map_file:
+    with open("./dates_csv/data_map"+str(year)+".csv", 'w', newline='') as data_map_file:
         data_writer = csv.writer(data_map_file)
-        data_writer.writerow(["name", "code", "gini"])
+        data_writer.writerow(["year", "name", "code", "gini"])
         for line in lines:
-            data_writer.writerow(line)
+            line_date = [str(year)]
+            line_date.extend(line)
+            data_writer.writerow(line_date)
