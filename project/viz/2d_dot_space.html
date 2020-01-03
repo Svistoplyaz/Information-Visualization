@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style type="text/css" media="screen, print">
+			body { margin: 30px 50px; font-family: sans-serif; }
+		</style>
+		<title>2D Dot Space</title>
+		<link rel="stylesheet" type="text/css" href="2d_dot_space.css">
+	</head>
+	<body>
+		<h1>2D Dot Space</h1>
+		<!-- <h2 id="debug_label"> No error </h2> -->
+
+		<script src="../vendor/d3/d3.js"></script>
+		<div class="slidecontainer">
+		  <input type="range" min="1960" max="2019" value="2005" class="slider" id="myRange">
+		</div>
+		<span>Year:</span>
+		<span id="slider_output">Max</span>
+
+		<script src="2d_dot_space.js"></script>
+		<script>
+			var slider = document.getElementById("myRange");
+			var output = document.getElementById("slider_output");
+			output.innerHTML = slider.value; // Display the default slider value
+			createDotSpace(slider.value);
+
+			// Update the current slider value (each time you drag the slider handle)
+			slider.oninput = function() {
+			  output.innerHTML = this.value;
+				var dot_space = document.getElementById("dot_space");
+				if(dot_space!=null){
+					console.log("Update");
+					dot_space.parentNode.removeChild(dot_space);
+					createDotSpace(this.value);
+				}
+			}
+		</script>
+	</body>
+</html>
