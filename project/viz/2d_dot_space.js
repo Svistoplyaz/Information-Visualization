@@ -57,39 +57,46 @@ TE_reg = {name:"TE", countries:["CZ"]};
 ALL_reg = [EU_reg, AS_reg, AF_reg, NA_reg, SA_reg, OC_reg];
 // ALL_reg = [TE_reg];
 
-function createDotSpace(year){
-  var consolidated_data = []
+//Global variables
+var consolidated_data = []
+var x_scale = null
+var y_scale = null
+var svg = null
 
+function initDotSpace(year){
+  //Let's go over all countries and save all the possible years in the global
   for(const reg of ALL_reg){
     // console.log(reg);
     for(const country of reg.countries){
       // console.log(country);
       d3.tsv("../data/income/"+country+".tsv", function(error, data) {
+        // console.log(consolidated_data.length);
         all_years = data.map(function(d) { return +d.year; });
         //Remove duplicate years for faster sort and lowerbound search
         all_years = [...new Set(all_years)];
         all_years.sort();
-        // Finding a year that is the biggest out of all years that are smaller
-        // than the chosen year or equal to it
-        max_year_index = lowerBound(all_years, +year);
-        max_year = all_years[max_year_index];
-        // max_year = Math.max.apply(Math, data.map(function(d) { return +d.year; }));
-        filtered_data = data.filter(function(d){return +d.year==max_year});
-        if(filtered_data.length != 0){
-          consolidated_data.push({country:filtered_data[0].country, region:reg.name,
-            year:max_year,
-            top_1:1 - parseFloat(filtered_data.filter(function(d){
-              return +d.high==0.99
-            })[0].cumul),
-            bot_50:parseFloat(filtered_data.filter(function(d){
-              return +d.high==0.5
-            })[0].cumul)
-          });
+
+        for(year of all_years){
+          var filtered_data = data.filter(function(d){return +d.year==year});
+          if(filtered_data.length != 0){
+            try{
+              consolidated_data.push({country:filtered_data[0].country, region:reg.name,
+                year:year,
+                top_1:1 - parseFloat(filtered_data.filter(function(d){
+                  return +d.high==0.99
+                })[0].cumul),
+                bot_50:parseFloat(filtered_data.filter(function(d){
+                  return +d.high==0.5
+                })[0].cumul)
+              });
+            }catch(error){
+              // console.log(country + " " + year + " data has bad precision");
+            }
+          }
         }
       });
     }
   }
-
   countries_names = {};
   d3.tsv("../data/countries.tsv", function(error, data) {
     for(const row of data){
@@ -100,18 +107,18 @@ function createDotSpace(year){
   //Stupid fix because I am not sure how to make it work without d3.tsv(...
   d3.tsv("../data/income/FR.tsv", function(error, data) {
     //Wealth of top 1%
-    var x = d3.scaleLinear()
+    x_scale = d3.scaleLinear()
         .range([0, width]);
 
     //Wealth of bottom 50%
-    var y = d3.scaleLinear()
+    y_scale = d3.scaleLinear()
       .range([height, 0]);
 
-    var xAxis = d3.axisBottom().scale(x)
+    var xAxis = d3.axisBottom().scale(x_scale)
 
-    var yAxis = d3.axisLeft().scale(y)
+    var yAxis = d3.axisLeft().scale(y_scale)
 
-    var svg = d3.select("body").append("svg")
+    svg = d3.select("body").append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
       .attr("id", "dot_space")
@@ -121,11 +128,9 @@ function createDotSpace(year){
     //Finding min and max value for axes.
     var x_domain = d3.extent(consolidated_data, function(d) { return d.top_1; });
     var y_domain = d3.extent(consolidated_data, function(d) { return d.bot_50; });
-    // var debug_label = document.getElementById("debug_label");
-    // debug_label.innerHTML = "X: " + x_domain + "; Y: " + y_domain;
 
-    x.domain(x_domain).nice();
-    y.domain(y_domain).nice();
+    x_scale.domain(x_domain).nice();
+    y_scale.domain(y_domain).nice();
 
     // Add the x-axis
     svg.append("g")
@@ -137,26 +142,11 @@ function createDotSpace(year){
     svg.append("g")
       .call(yAxis);
 
-    // Add the points from the dataset
-    svg.selectAll(".point")
-      .data(consolidated_data)
-      .enter()
-      .append("circle")
-      .attr("class", "point")
-      .attr("class", function(d) {return d.region})
-      .attr("r", 20)
-      .attr("title", "Lel")
-      .attr("cx", function(d) { return x(f(d.top_1)); })
-      .attr("cy", function(d) { return y(f(d.bot_50)); })
-      .on("mouseover", mouseover )
-      .on("mousemove", mousemove )
-      .on("mouseleave", mouseleave );
-
-    var keys = [];
-    for(const reg of ALL_reg) keys.push(reg.name);
+    var regions = [];
+    for(const reg of ALL_reg) regions.push(reg.name);
 
     var legend = svg.selectAll(".legend")
-      .data(keys)
+      .data(regions)
     .enter().append("g")
       .attr("class", "legend")
       .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
@@ -175,6 +165,53 @@ function createDotSpace(year){
       .style("text-anchor", "end")
       .text(function(d) { return d } );
   });
+
+}
+
+function drawDots(year){
+  points_to_delete = document.getElementsByClassName("point");
+  console.log(points_to_delete.length);
+  while(points_to_delete[0]){
+    points_to_delete[0].parentNode.removeChild(points_to_delete[0]);
+  }
+  points = svg.selectAll(".point");
+
+  var data_to_draw = [];
+  for(const reg of ALL_reg){
+    for(const country of reg.countries){
+      //Chosing current country
+      var filtered_data = consolidated_data.filter(function(d){return d.country==country});
+
+      //Getting years of the country
+      all_years = filtered_data.map(function(d) { return +d.year; });
+      all_years.sort();
+      // Finding a year that is the biggest out of all years that are smaller
+      // than the chosen year or equal to it
+      suitable_year_index = lowerBound(all_years, +year);
+      suitable_year = all_years[suitable_year_index];
+      filtered_data = filtered_data.filter(function(d){return +d.year==suitable_year});
+      // max_year = Math.max.apply(Math, data.map(function(d) { return +d.year; }));
+      if(filtered_data.length != 0){
+        data_to_draw.push(filtered_data[0]);
+      }
+      // break;
+    }
+    // break;
+  }
+
+  svg.selectAll(".point")
+    .data(data_to_draw)
+    .enter()
+    .append("circle")
+    // .attr("class", "point")
+    .attr("class", function(d) {return d.region+" point"})
+    .attr("r", 20)
+    .attr("title", "Lel")
+    .attr("cx", function(d) { return x_scale(f(d.top_1)); })
+    .attr("cy", function(d) { return y_scale(f(d.bot_50)); })
+    .on("mouseover", mouseover )
+    .on("mousemove", mousemove )
+    .on("mouseleave", mouseleave );
 }
 
 function lowerBound_cmp(array, value, compare, lo, hi) {

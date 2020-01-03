@@ -17,23 +17,23 @@
 		  <input type="range" min="1960" max="2019" value="2005" class="slider" id="myRange">
 		</div>
 		<span>Year:</span>
-		<span id="slider_output">Max</span>
+		<span id="slider_output">Not chosen</span>
 
 		<script src="2d_dot_space.js"></script>
 		<script>
 			var slider = document.getElementById("myRange");
 			var output = document.getElementById("slider_output");
-			output.innerHTML = slider.value; // Display the default slider value
-			createDotSpace(slider.value);
+			// output.innerHTML = slider.value; // Display the default slider value
+			initDotSpace(slider.value);
 
 			// Update the current slider value (each time you drag the slider handle)
 			slider.oninput = function() {
 			  output.innerHTML = this.value;
-				var dot_space = document.getElementById("dot_space");
+				// var dot_space = document.getElementById("dot_space");
 				if(dot_space!=null){
 					console.log("Update");
-					dot_space.parentNode.removeChild(dot_space);
-					createDotSpace(this.value);
+					// dot_space.parentNode.removeChild(dot_space);
+					drawDots(slider.value);
 				}
 			}
 		</script>
