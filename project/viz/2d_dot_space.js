@@ -38,20 +38,20 @@ var s = d3.formatSpecifier("f");
 s.precision = d3.precisionFixed(0.01);
 var f = d3.format(s);
 //Europe without SI/Slovakia because it doesn't have good precision
-EU_reg = {name:"EU", countries:["CZ", "DE", "FR", "IN", "PL", "RU"/*, "SI"*/]};
+EU_reg = {name:"EU", full_name:"Europe", countries:["CZ", "DE", "FR", "IN", "PL", "RU"/*, "SI"*/]};
 //Asia without KR/Korea because it doesn't have good precision
-AS_reg = {name:"AS", countries:["AE", "BH", "CN", "IQ", "IR", "JO", /*"KR",*/
+AS_reg = {name:"AS", full_name:"Asia", countries:["AE", "BH", "CN", "IQ", "IR", "JO", /*"KR",*/
   "KW", "LB", "OM", "PS", "QA", "SA", "SY", "TH", "TR", "YE", "MY"]};
 //Africa
-AF_reg = {name:"AF", countries:["CI", "EG"]};
+AF_reg = {name:"AF", full_name:"Africa", countries:["CI", "EG"]};
 //North America
-NA_reg = {name:"NA", countries:["US"]};
+NA_reg = {name:"NA", full_name:"North America", countries:["US"]};
 //South America
-SA_reg = {name:"SA", countries:["BR"]};
+SA_reg = {name:"SA", full_name:"South America", countries:["BR"]};
 //Oceania
-OC_reg = {name:"OC", countries:[]};
+OC_reg = {name:"OC", full_name:"Oceania", countries:[]};
 //
-TE_reg = {name:"TE", countries:["CZ"]};
+TE_reg = {name:"TE", full_name:"Europe", countries:["CZ"]};
 
 //All regions
 ALL_reg = [EU_reg, AS_reg, AF_reg, NA_reg, SA_reg, OC_reg];
@@ -142,11 +142,8 @@ function initDotSpace(year){
     svg.append("g")
       .call(yAxis);
 
-    var regions = [];
-    for(const reg of ALL_reg) regions.push(reg.name);
-
     var legend = svg.selectAll(".legend")
-      .data(regions)
+      .data(ALL_reg)
     .enter().append("g")
       .attr("class", "legend")
       .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
@@ -155,7 +152,7 @@ function initDotSpace(year){
       .attr("x", width - 18)
       .attr("width", 18)
       .attr("height", 18)
-      .attr("class", function(d) { return d })
+      .attr("class", function(d) { return d.name })
       // .style("fill", function(d) { return colors[d]; } );
 
     legend.append("text")
@@ -163,7 +160,7 @@ function initDotSpace(year){
       .attr("y", 9)
       .attr("dy", ".35em")
       .style("text-anchor", "end")
-      .text(function(d) { return d } );
+      .text(function(d) { return d.full_name } );
   });
 
 }
