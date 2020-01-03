@@ -30,7 +30,7 @@ var mouseleave = function(d) {
 
 var body = d3.select("body");
 
-var margin = {top: 20, right: 10, bottom: 20, left: 45};
+var margin = {top: 20, right: 10, bottom: 45, left: 45};
 var width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -134,13 +134,35 @@ function initDotSpace(year){
 
     // Add the x-axis
     svg.append("g")
-      .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
+
+    // text label for the x axis
+    svg.append("text")
+      .attr("transform", "translate(" + (width/2) + " ," +
+             (height + margin.top + 21) + ")")
+      // .style("fill", "red")
+      .style("text-anchor", "middle")
+      .text("Wealth of top 1%");
+
+  	// svg.append('text')
+  	// 	.text("share of population")
+  	// 	.attr('text-anchor', 'end')
+  	// 	.attr('x', 600)
+  	// 	.attr('y', 480);
 
     // Add the y-axis
     svg.append("g")
       .call(yAxis);
+
+    // text label for the y axis
+    svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left)
+      .attr("x",0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .text("Wealth of bottom 50%");
 
     var legend = svg.selectAll(".legend")
       .data(ALL_reg)
