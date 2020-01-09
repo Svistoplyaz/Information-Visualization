@@ -2,9 +2,13 @@
   opacity: .8;
   fill: #ffff00;
 }
-.AS  {
+.ME  {
   opacity: .8;
   fill: #ff0000;
+}
+.EA  {
+  opacity: .8;
+  fill: #800080;
 }
 .AF  {
   opacity: .8;
@@ -18,10 +22,14 @@
   opacity: .8;
   fill: #00ff00;
 }
-.OC  {
-  opacity: .8;
-  fill: #800080;
+.chosen  {
+  opacity: 1;
+  fill: #000000 !important;
 }
+.deselected  {
+  opacity: 0.1 !important;
+}
+
 .axis line,
 .axis path {
   fill: none;

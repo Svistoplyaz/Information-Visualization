@@ -28,6 +28,43 @@ var mouseleave = function(d) {
     .style("opacity", 0)
 }
 
+var mouseclick = function(d, index, circles){
+  if(chosen_country == null || chosen_country != null && chosen_country != d.country){
+    var chosen_circle = document.getElementsByClassName("chosen");
+    if(chosen_circle.length != 0){
+      chosen_circle[0].classList.remove("chosen");
+    }
+    chosen_circle = circles[index];
+    chosen_circle.classList.add("chosen");
+    chosen_country = d.country;
+  }else{
+    var chosen_circle = document.getElementsByClassName("chosen");
+    if(chosen_circle.length != 0){
+      chosen_circle[0].classList.remove("chosen");
+    }
+    chosen_country = null;
+  }
+}
+
+var select_region = function(d, index, arr){
+  region = arr[index];
+  points = document.getElementsByClassName(d.name+" point");
+  if(d.selected == 1){
+    region.classList.add("deselected");
+    for(point of points){
+      point.style.visibility = "hidden";
+    }
+  }else{
+    region.classList.remove("deselected");
+    for(point of points){
+      point.style.visibility = "visible";
+    }
+  }
+  d.selected = (d.selected+1)%2;
+}
+
+var chosen_country = null;
+
 var body = d3.select("body");
 
 var margin = {top: 20, right: 10, bottom: 45, left: 45};
@@ -38,23 +75,23 @@ var s = d3.formatSpecifier("f");
 s.precision = d3.precisionFixed(0.01);
 var f = d3.format(s);
 //Europe without SI/Slovakia because it doesn't have good precision
-EU_reg = {name:"EU", full_name:"Europe", countries:["CZ", "DE", "FR", "IN", "PL", "RU"/*, "SI"*/]};
+EU_reg = {name:"EU", selected:1, full_name:"Europe", countries:["CZ", "DE", "FR", "PL", "RU"/*, "SI"*/]};
 //Asia without KR/Korea because it doesn't have good precision
-AS_reg = {name:"AS", full_name:"Asia", countries:["AE", "BH", "CN", "IQ", "IR", "JO", /*"KR",*/
-  "KW", "LB", "OM", "PS", "QA", "SA", "SY", "TH", "TR", "YE", "MY"]};
+ME_reg = {name:"ME", selected:1, full_name:"Middle East", countries:["AE", "BH", "IQ", "IR", "JO", /*"KR",*/
+  "KW", "LB", "OM", "PS", "QA", "SA", "SY", "TR", "YE"]};
+//Eastern Asia
+EA_reg = {name:"EA", selected:1, full_name:"Eastern Asia", countries:["CN", "IN", "TH", "MY"]};
 //Africa
-AF_reg = {name:"AF", full_name:"Africa", countries:["CI", "EG"]};
+AF_reg = {name:"AF", selected:1, full_name:"Africa", countries:["CI", "EG"]};
 //North America
-NA_reg = {name:"NA", full_name:"North America", countries:["US"]};
+NA_reg = {name:"NA", selected:1, full_name:"North America", countries:["US"]};
 //South America
-SA_reg = {name:"SA", full_name:"South America", countries:["BR"]};
-//Oceania
-OC_reg = {name:"OC", full_name:"Oceania", countries:[]};
+SA_reg = {name:"SA", selected:1, full_name:"South America", countries:["BR"]};
 //
-TE_reg = {name:"TE", full_name:"Europe", countries:["CZ"]};
+TE_reg = {name:"TE", selected:1, full_name:"Europe", countries:["CZ"]};
 
 //All regions
-ALL_reg = [EU_reg, AS_reg, AF_reg, NA_reg, SA_reg, OC_reg];
+ALL_reg = [EU_reg, ME_reg, EA_reg, AF_reg, NA_reg, SA_reg];
 // ALL_reg = [TE_reg];
 
 //Global variables
@@ -141,15 +178,8 @@ function initDotSpace(year){
     svg.append("text")
       .attr("transform", "translate(" + (width/2) + " ," +
              (height + margin.top + 21) + ")")
-      // .style("fill", "red")
       .style("text-anchor", "middle")
       .text("Wealth of top 1%");
-
-  	// svg.append('text')
-  	// 	.text("share of population")
-  	// 	.attr('text-anchor', 'end')
-  	// 	.attr('x', 600)
-  	// 	.attr('y', 480);
 
     // Add the y-axis
     svg.append("g")
@@ -175,7 +205,7 @@ function initDotSpace(year){
       .attr("width", 18)
       .attr("height", 18)
       .attr("class", function(d) { return d.name })
-      // .style("fill", function(d) { return colors[d]; } );
+      .on("click", select_region );
 
     legend.append("text")
       .attr("x", width - 24)
@@ -193,9 +223,13 @@ function drawDots(year){
   while(points_to_delete[0]){
     points_to_delete[0].parentNode.removeChild(points_to_delete[0]);
   }
-  points = svg.selectAll(".point");
 
   var data_to_draw = [];
+  // data_to_draw.push({country:"Lel", region:"OC",
+  //   year:2015,
+  //   top_1:0.04,
+  //   bot_50:0.1
+  // });
   for(const reg of ALL_reg){
     for(const country of reg.countries){
       //Chosing current country
@@ -218,19 +252,60 @@ function drawDots(year){
     // break;
   }
 
+
   svg.selectAll(".point")
     .data(data_to_draw)
     .enter()
     .append("circle")
-    // .attr("class", "point")
-    .attr("class", function(d) {return d.region+" point"})
+    .attr("class", function(d) {
+      if(chosen_country!=null && chosen_country == d.country){
+        return d.region+" point chosen";
+      }else{
+        return d.region+" point";
+      }
+    })
     .attr("r", 20)
     .attr("title", "Lel")
-    .attr("cx", function(d) { return x_scale(f(d.top_1)); })
-    .attr("cy", function(d) { return y_scale(f(d.bot_50)); })
+    .attr("stroke", "black")
+    .attr("stroke-width", "2")
+    .attr("cx", function(d) { return x_scale(d.top_1); })
+    .attr("cy", function(d) { return y_scale(d.bot_50); })
+    .attr("visibility", function(d){
+      for(const reg of ALL_reg){
+        if(reg.name == d.region){
+          if(reg.selected == 0){
+            return "hidden";
+          }
+          break;
+        }
+      }
+      return "visible";
+    })
     .on("mouseover", mouseover )
     .on("mousemove", mousemove )
-    .on("mouseleave", mouseleave );
+    .on("mouseleave", mouseleave )
+    .on("click", mouseclick );
+
+  // if(chosen_country != null){
+  //   chosen_data = data_to_draw[chosen_country];
+  //   console.log(chosen_data);
+  //   svg.selectAll(".point")
+  //     .data(chosen_data)
+  //     .enter()
+  //     .append("circle")
+  //     // .attr("class", "point")
+  //     .attr("class", )
+  //     .attr("r", 20)
+  //     .attr("title", "Lel")
+  //     .attr("stroke", "black")
+  //     .attr("stroke-width", "2")
+  //     .attr("cx", function(d) { return x_scale(d.top_1); })
+  //     .attr("cy", function(d) { return y_scale(d.bot_50); })
+  //     .on("mouseover", mouseover )
+  //     .on("mousemove", mousemove )
+  //     .on("mouseleave", mouseleave )
+  //     .on("click", mouseclick );
+  // }
 }
 
 function lowerBound_cmp(array, value, compare, lo, hi) {
