@@ -5,14 +5,23 @@
 		<style type="text/css" media="screen, print">
 			body { margin: 30px 50px; font-family: sans-serif; }
 		</style>
-		<title>US - 2014 - Income cdf</title>
+		<title>US - Income cdf</title>
 	</head>
 	<body>
-		<h1>US - 2014 - Income cdf</h1>
+		<h1>US - Income cdf</h1>
 
 		<script src="../vendor/d3/d3.js"></script>
+		<div class="slidecontainer">
+		  <input type="range" min="1966" max="2014" value="2005" class="slider" id="myRange">
+		</div>
+		<span>Year:</span>
+		<span id="slider_output">Not chosen</span>
 		<script>
+var slider = document.getElementById("myRange");
+var output = document.getElementById("slider_output");
 
+
+var base_data = [];
 var margin = {top: 100, right: 100, bottom: 40, left: 100},
     width = 800 - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
@@ -28,23 +37,62 @@ var y = d3.scaleLinear()
 var svg = d3.select('body').append('svg')
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
+		.attr("id", "rect_space")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+var xAxis = d3.axisBottom(x);
+svg.append('g')
+	.attr('transform', 'translate(0,' + (y(0)+5) +')')
+	.call(xAxis);
+
+svg.append('text')
+	.text("share of population")
+	.attr('text-anchor', 'end')
+	.attr('x', x(1))
+	.attr('y', y(0)+38);
+
+var yAxis = d3.axisRight(y);
+svg.append('g')
+	.attr('transform', 'translate(' + (x(1)+5) +')')
+	.call(yAxis);
+
+svg.append('text')
+	.text("share of income")
+	.attr('transform', 'translate(' + (x(1)+45) +',' + y(1) + ') rotate(-90)')
+	.attr('text-anchor', 'end');
+
+d3.tsv("../data/income/US.tsv", function(error, data){
+
+	console.log(data[0]);
+	if(error) throw error;
+	base_data.push(data.sort((a,b) => +a.low - +b.low));
+	console.log(base_data[0][0].cumul);
+})
+
+function drawRects(year){
+	rects_to_delete = document.getElementsByClassName("rect");
+
+	console.log("rects_to_delete.length "+rects_to_delete.length);
+	while(rects_to_delete[0]){
+		rects_to_delete[0].parentNode.removeChild(rects_to_delete[0]);
+	}
 
 d3.tsv("../data/income/US.tsv", function(error, data) {
 	if(error) throw error;
 
-	data = data
-		.filter(d => +d.year == 2014)
-		.sort((a, b) => +a.low - +b.low);
-
-	var data1 = data.filter(d => +d.cumul <= 0.25);	
-	var data2 = data.filter(d => (+d.cumul >= 0.25) && (+d.cumul <=0.5));
-	var data3 = data.filter(d => (+d.cumul >= 0.5) && (+d.cumul <=0.75));
-	var data4 = data.filter(d => (+d.cumul >= 0.75));
+	var filtered_data = base_data[0]
+		.filter(d => +d.year == year);
+	console.log("filtered_data.length "+filtered_data.length);
+	var data1 = filtered_data.filter(d => +d.cumul <= 0.25);
+	var data2 = filtered_data.filter(d => (+d.cumul >= 0.25) && (+d.cumul <=0.5));
+	var data3 = filtered_data.filter(d => (+d.cumul >= 0.5) && (+d.cumul <=0.75));
+	var data4 = filtered_data.filter(d => (+d.cumul >= 0.75));
 	var g = svg.selectAll('.hist')
     		.data(data1)
 		.enter().append('rect')
+				.attr("class", "rect")
 	    	.attr('x',      d => x(+d.low))
 	    	.attr('y',      d => y(+d.cumul))
 	    	.attr('width',  d => x(+d.high)-x(+d.low))
@@ -53,6 +101,7 @@ d3.tsv("../data/income/US.tsv", function(error, data) {
 	var g = svg.selectAll('.hist')
     		.data(data2)
 		.enter().append('rect')
+				.attr("class", "rect")
 	    	.attr('x',      d => x(+d.low))
 	    	.attr('y',      d => y(+d.cumul))
 	    	.attr('width',  d => x(+d.high)-x(+d.low))
@@ -61,6 +110,7 @@ d3.tsv("../data/income/US.tsv", function(error, data) {
 	var g = svg.selectAll('.hist')
     		.data(data3)
 		.enter().append('rect')
+				.attr("class", "rect")
 	    	.attr('x',      d => x(+d.low))
 	    	.attr('y',      d => y(+d.cumul))
 	    	.attr('width',  d => x(+d.high)-x(+d.low))
@@ -69,6 +119,7 @@ d3.tsv("../data/income/US.tsv", function(error, data) {
 	var g = svg.selectAll('.hist')
     		.data(data4)
 		.enter().append('rect')
+				.attr("class", "rect")
 	    	.attr('x',      d => x(+d.low))
 	    	.attr('y',      d => y(+d.cumul))
 	    	.attr('width',  d => x(+d.high)-x(+d.low))
@@ -99,30 +150,21 @@ d3.tsv("../data/income/US.tsv", function(error, data) {
 		.attr("stroke-width", 1)
 		.attr("fill", "rgb(255, 100, 0)");*/
 
-		
 
-	var xAxis = d3.axisBottom(x);
-	svg.append('g')
-		.attr('transform', 'translate(0,' + (y(0)+5) +')')
-		.call(xAxis);
 
-	svg.append('text')
-		.text("share of population")
-		.attr('text-anchor', 'end')
-		.attr('x', x(1))
-		.attr('y', y(0)+38);
-	
-	var yAxis = d3.axisRight(y);   
-	svg.append('g')
-		.attr('transform', 'translate(' + (x(1)+5) +')')
-		.call(yAxis);
 
-	svg.append('text')
-		.text("share of income")
-		.attr('transform', 'translate(' + (x(1)+45) +',' + y(1) + ') rotate(-90)')
-		.attr('text-anchor', 'end');
-	
 });
+}
+// Update the current slider value (each time you drag the slider handle)
+slider.oninput = function() {
+	output.innerHTML = this.value;
+	// var dot_space = document.getElementById("dot_space");
+	if(rect_space!=null){
+		console.log("Update");
+		// dot_space.parentNode.removeChild(dot_space);
+		drawRects(slider.value);
+	}
+}
 
 		</script>
 	</body>
