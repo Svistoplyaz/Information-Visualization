@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style type="text/css" media="screen, print">
+			body { margin: 30px 50px; font-family: sans-serif; }
+		</style>
+		<title>US - Cumulated income</title>
+	</head>
+	<body>
+		<h1>US - Cumulated income</h1>
+
+		<script src="../vendor/d3/d3.js"></script>
+		<div class="slidecontainer">
+		  <input type="range" min="1966" max="2014" value="2005" class="slider" id="myRange">
+		</div>
+		<span>Year:</span>
+		<span id="slider_output">Not chosen</span>
+		<script>
+var slider = document.getElementById("myRange");
+var output = document.getElementById("slider_output");
+
+
+var base_data = [];
+var margin = {top: 100, right: 100, bottom: 40, left: 100},
+    width = 800 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+var x = d3.scaleLinear()
+    .range([0, width])
+    .domain([0, 1]);
+
+var y = d3.scaleLinear()
+    .range([height, 0])
+    .domain([0, 1]);
+
+var svg = d3.select('body').append('svg')
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+		.attr("id", "rect_space")
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+var xAxis = d3.axisBottom(x);
+svg.append('g')
+	.attr('transform', 'translate(0,' + (y(0)+5) +')')
+	.call(xAxis);
+
+svg.append('text')
+	.text("share of population")
+	.attr('text-anchor', 'end')
+	.attr('x', x(1))
+	.attr('y', y(0)+38);
+
+var yAxis = d3.axisRight(y);
+svg.append('g')
+	.attr('transform', 'translate(' + (x(1)+5) +')')
+	.call(yAxis);
+
+svg.append('text')
+	.text("cumulated share of income")
+	.attr('transform', 'translate(' + (x(1)+45) +',' + y(1) + ') rotate(-90)')
+	.attr('text-anchor', 'end');
+
+var legend = svg.append("g")
+	.attr("class", "legend");
+
+legend.append("rect")
+	.attr("x", 18)
+	.attr("y", 0)
+	.attr("width", 18)
+	.attr("height", 18)
+	.attr("fill", "rgb(255, 255, 0)");
+
+legend.append("text")
+	.attr("x", 50)
+	.attr("y", 15)
+	.text("0% - 25%");
+
+legend.append("rect")
+	.attr("x", 18)
+	.attr("y", 36)
+	.attr("width", 18)
+	.attr("height", 18)
+	.attr("fill", "rgb(255, 200, 0)");
+
+legend.append("text")
+	.attr("x", 50)
+	.attr("y", 36 + 15)
+	.text("25% - 50%");
+
+legend.append("rect")
+		.attr("x", 18)
+		.attr("y", 72)
+		.attr("width", 18)
+		.attr("height", 18)
+		.attr("fill", "rgb(255, 150, 0)");
+
+	legend.append("text")
+		.attr("x", 50)
+		.attr("y", 72 + 15)
+		.text("50% - 75%");
+
+	legend.append("rect")
+			.attr("x", 18)
+			.attr("y", 108)
+			.attr("width", 18)
+			.attr("height", 18)
+			.attr("fill", "rgb(255, 0, 0)");
+
+	legend.append("text")
+		.attr("x", 50)
+		.attr("y", 108 + 15)
+		.text("75% - 100%");
+
+d3.tsv("../data/income/US.tsv", function(error, data){
+
+	console.log(data[0]);
+	if(error) throw error;
+	base_data.push(data.sort((a,b) => +a.low - +b.low));
+	console.log(base_data[0][0].cumul);
+})
+
+function drawRects(year){
+	rects_to_delete = document.getElementsByClassName("rect");
+
+	console.log("rects_to_delete.length "+rects_to_delete.length);
+	while(rects_to_delete[0]){
+		rects_to_delete[0].parentNode.removeChild(rects_to_delete[0]);
+	}
+
+d3.tsv("../data/income/US.tsv", function(error, data) {
+	if(error) throw error;
+
+	var filtered_data = base_data[0]
+		.filter(d => +d.year == year);
+	console.log("filtered_data.length "+filtered_data.length);
+	var data1 = filtered_data.filter(d => +d.cumul <= 0.25);
+	var data2 = filtered_data.filter(d => (+d.cumul >= 0.25) && (+d.cumul <=0.5));
+	var data3 = filtered_data.filter(d => (+d.cumul >= 0.5) && (+d.cumul <=0.75));
+	var data4 = filtered_data.filter(d => (+d.cumul >= 0.75));
+	console.log("start draw");
+	var g = svg.selectAll('.hist')
+    		.data(data1)
+		.enter().append('rect')
+				.attr("class", "rect")
+	    	.attr('x',      d => x(+d.low))
+	    	.attr('y',      d => y(+d.cumul))
+	    	.attr('width',  d => x(+d.high)-x(+d.low))
+	    	.attr('height', d => Math.max(0, y(0)-y(+d.cumul)))
+		.attr('fill', "rgb(255, 255, 0)");
+	console.log("rect 1 ok");
+	var g = svg.selectAll('.hist')
+    		.data(data2)
+		.enter().append('rect')
+				.attr("class", "rect")
+	    	.attr('x',      d => x(+d.low))
+	    	.attr('y',      d => y(+d.cumul))
+	    	.attr('width',  d => x(+d.high)-x(+d.low))
+	    	.attr('height', d => y(0)-y(+d.cumul))
+		.attr('fill', "rgb(255, 200, 0)");
+	console.log("rect 2 ok");
+	var g = svg.selectAll('.hist')
+    		.data(data3)
+		.enter().append('rect')
+				.attr("class", "rect")
+	    	.attr('x',      d => x(+d.low))
+	    	.attr('y',      d => y(+d.cumul))
+	    	.attr('width',  d => x(+d.high)-x(+d.low))
+	    	.attr('height', d => y(0)-y(+d.cumul))
+		.attr('fill', "rgb(255, 150, 0)");
+	console.log("rect 3 ok");
+	var g = svg.selectAll('.hist')
+    		.data(data4)
+		.enter().append('rect')
+				.attr("class", "rect")
+	    	.attr('x',      d => x(+d.low))
+	    	.attr('y',      d => y(+d.cumul))
+	    	.attr('width',  d => x(+d.high)-x(+d.low))
+	    	.attr('height', d => y(0)-y(+d.cumul))
+		.attr('fill', "rgb(255, 0, 0)");
+	console.log("rect 4 ok");
+	/*var cdf = d3.line()
+		.x(function(d) { return x(+d.high); })
+		.y(function(d) { return y(+d.cumul); });
+
+	var line1 = svg.append("path").datum(data1)
+		.attr("d", cdf)
+		.attr("stroke", "black")
+		.attr("stroke-width", 1)
+		.attr("fill", "rgb(255, 255, 0)");
+	var line2 = svg.append("path").datum(data2)
+		.attr("d", cdf)
+		.attr("stroke", "black")
+		.attr("stroke-width", 1)
+		.attr("fill", "rgb(255, 200, 0)");
+	var line3 = svg.append("path").datum(data3)
+		.attr("d", cdf)
+		.attr("stroke", "black")
+		.attr("stroke-width", 1)
+		.attr("fill", "rgb(255, 150, 0)");
+	var line4 = svg.append("path").datum(data4)
+		.attr("d", cdf)
+		.attr("stroke", "black")
+		.attr("stroke-width", 1)
+		.attr("fill", "rgb(255, 100, 0)");*/
+
+
+
+
+
+});
+}
+// Update the current slider value (each time you drag the slider handle)
+slider.oninput = function() {
+	output.innerHTML = this.value;
+	// var dot_space = document.getElementById("dot_space");
+	if(rect_space!=null){
+		console.log("Update");
+		// dot_space.parentNode.removeChild(dot_space);
+		drawRects(slider.value);
+	}
+}
+
+		</script>
+	</body>
+</html>
