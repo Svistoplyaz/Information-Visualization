@@ -65,11 +65,11 @@
 
 
     <script>
-//1200 900
+
 
 
     // The svg
-    var width = 1000,
+    var width = 1350,
         height = 800;
 
     var svg = d3.select("#my_dataviz")
@@ -80,6 +80,7 @@
     // Get the data to build dropdown options
     // Struggling to handle asynchrone of JS loading data
     var years = ["1920", "1930", "1940", "1950", "1960", "1970", "1980", "1990", "2000", "2010", "2014", "2015"];
+
     // Fill the dropdown button
     d3.select("#dropdown")
       .selectAll('option')
@@ -88,32 +89,6 @@
       .append("option")
       .attr("value", function(d) {return d;})
       .text(function(d) {return d;});
-
-    // Trying to solve async problem
-    /*
-    d3.queue()
-      .defer(d3.csv, "../data/world_map_data/agg_dates_data.csv", function(d) {
-        all_years = d.map(function(d) { return d.year;});
-        all_years = [...new Set(all_years)];
-        for (year of all_years) {
-          if (Number.isInteger(year/10)) {
-            years.push({year:year});
-          }
-        }
-      })
-      .await(ready);
-
-    function ready(error, years_data){
-      // Fill the dropdown button
-      d3.select("#dropdown")
-        .selectAll('option')
-        .data(years)
-        .enter()
-        .append("option")
-        .attr("value", function(d) {return d.year;})
-        .text(function(d) {return d.year;});
-    };
-    */
 
     // Map and projection
     var path = d3.geoPath();
@@ -219,6 +194,7 @@ function plot_map(selected_year) {
   var selected_year = "1920";
   plot_map(selected_year);
 
+// Monitor events related to the dropdown button
   d3.select("#dropdown").on("change", function() {
       var selected_year = this.value;
       console.log(selected_year);
