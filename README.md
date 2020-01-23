@@ -20,9 +20,6 @@ Extracts of the [World Inequality Database](https://wid.world/).
 	* **income_averages.tsv** income average per country and year (constant 2015 euro)
 	* **income/** income share per country
 	* **world_map_data/** files used for the world map visualization
-	  * **choose_date.py** choose date with "python choose_date.py \<year\>"
-	  * **data.csv** whole data related to gini index
-	  * **data_map.csv** data related to gini index for the choosen year
 * **viz/** sample visualisations
 * **vendor/** vendorized d3 library
 
